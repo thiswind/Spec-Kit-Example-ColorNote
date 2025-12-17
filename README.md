@@ -82,7 +82,7 @@
   - 在你的项目中，该文件会被 Preflight 校验读取（见 Plan 章节）
   - **注意**：模板仓库中的是示例，你需要在**自己的项目**中创建并填写该文件
 - **`spec-template.md`**：包含 Constitution（项目宪章）、Specify（需求规格）、Plan（实现计划）三个章节的完整模板，包含占位符需要替换
-- **`scripts/init-project.sh`**：项目初始化脚本，自动删除模板仓库的 `.git/` 目录，重新初始化 Git 并连接到你的项目仓库，同时更新 `project.config.json`
+- **`scripts/init-project.sh`**：项目初始化脚本，从 `project.config.json` 读取配置，自动删除模板仓库的 `.git/` 目录，重新初始化 Git 并连接到你的项目仓库
 - **`scripts/render-spec.py`**：Python 脚本，使用 Jinja2 模板引擎自动替换 `spec-template.md` 中的占位符，生成 `spec-template-rendered.md`。脚本会自动检查并安装依赖（Jinja2）
 - **`scripts/requirements.txt`**：Python 依赖文件，包含 Jinja2（用于模板渲染）
 
@@ -115,24 +115,18 @@ specify init --help
 
 **使用初始化脚本（推荐）**：
 
-运行初始化脚本，自动完成删除 `.git/`、重新初始化 Git、更新 `project.config.json` 等操作：
+运行初始化脚本，脚本会从 `project.config.json` 读取配置，自动完成删除 `.git/`、重新初始化 Git 等操作：
 
 ```bash
-./scripts/init-project.sh <your-github-username> <your-repo-name> [branch-name]
-```
-
-示例：
-
-```bash
-./scripts/init-project.sh myusername ColorNote main
+./scripts/init-project.sh
 ```
 
 脚本会自动：
+- 从 `project.config.json` 读取配置信息
 - 检测并删除模板仓库的 `.git/` 目录
 - 重新初始化 Git 仓库
-- 设置默认分支
-- 添加你的 GitHub 仓库作为 remote origin
-- 更新 `project.config.json` 中的配置值
+- 设置默认分支（从 `project.config.json` 读取）
+- 添加你的 GitHub 仓库作为 remote origin（基于 `project.config.json` 中的配置）
 
 **手动操作（如果不使用脚本）**：
 

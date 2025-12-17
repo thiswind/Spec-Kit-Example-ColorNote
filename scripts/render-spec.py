@@ -93,16 +93,25 @@ def main():
         sys.exit(1)
 
     # 验证必需的配置项
-    required_keys = ['github_owner', 'repo_name', 'default_branch', 'vercel_project_name']
+    required_keys = ['github_owner', 'repo_name', 'default_branch']
+    optional_keys = ['vercel_project_name']
+    
+    # 检查必需字段
     missing_keys = [key for key in required_keys if key not in config or not config[key]]
+    
+    # 检查可选字段，如果不存在则使用空字符串
+    for key in optional_keys:
+        if key not in config or not config[key]:
+            config[key] = ""
 
     if missing_keys:
         print(f"错误：缺少必需的配置项: {', '.join(missing_keys)}")
         sys.exit(1)
 
     print("配置值：")
-    for key in required_keys:
-        print(f"  {key}: {config[key]}")
+    for key in required_keys + optional_keys:
+        value = config.get(key, "")
+        print(f"  {key}: {value if value else '(未设置)'}")
 
     # 读取模板文件
     try:
