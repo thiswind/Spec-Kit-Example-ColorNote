@@ -8,10 +8,34 @@
 
 本仓库是一个**示例模板项目**，旨在：
 
+- 提供**开箱即用**的完整规范模板（Constitution / Specify / Plan）
 - 展示如何使用 Spec-Kit 进行规范驱动开发
-- 提供完整的规范模板（Constitution / Specify / Plan）
 - 演示如何通过 AI 助手与 Spec-Kit 协作进行开发
 - 作为学习 Spec-Kit 的实践案例
+
+### 核心价值
+
+`spec-template.md` 中的三个章节**直接对应** Spec-Kit 的三个开发阶段：
+
+1. **Constitution 章节** → `/speckit.constitution` 命令
+
+   - 项目原则和开发指南
+   - 技术栈选型和质量红线
+
+2. **Specify 章节** → `/speckit.specify` 命令
+
+   - 功能需求和验收标准
+   - 描述"要做什么"和"如何验证"
+
+3. **Plan 章节** → `/speckit.plan` 命令
+
+   - 技术实现方案
+   - 架构设计和实现细节
+
+**你不需要从零开始写这些规范**，只需要：
+1. 替换模板中的占位符
+2. 将内容复制到相应的 Spec-Kit 命令中
+3. 开始使用 Spec-Kit 进行开发
 
 ## 📋 如何使用本模板
 
@@ -174,9 +198,17 @@ specify init .
 
 ### 第四步：使用 AI 助手命令导入规范
 
-**这是关键步骤**：使用 AI 助手的 Spec-Kit 命令，将 `spec-template.md` 中已处理好的内容复制到相应的命令中。
+**这是关键步骤**：`spec-template.md` 的三个章节直接对应 Spec-Kit 的三个开发阶段。使用 AI 助手的 Spec-Kit 命令，将模板中已处理好的内容复制到相应的命令中。
+
+> **参考**：[Spec-Kit 官方文档](https://raw.githubusercontent.com/github/spec-kit/refs/heads/main/README.md) 中的三个阶段：
+>
+> - **Step 2**: Establish project principles → `/speckit.constitution`
+> - **Step 3**: Create the spec → `/speckit.specify`
+> - **Step 4**: Create a technical implementation plan → `/speckit.plan`
 
 #### 4.1 导入 Constitution（项目宪章）
+
+对应 Spec-Kit 的 **Step 2: Establish project principles**。
 
 在你的 AI 助手中，使用以下命令：
 
@@ -184,7 +216,7 @@ specify init .
 /speckit.constitution
 ```
 
-然后将 `spec-template.md` 中 **Constitution 章节**的内容（从 `## Constitution` 开始，到 `---` 之前）复制粘贴到命令中。
+然后将 `spec-template.md` 中 **Constitution 章节**的内容（从 `## Constitution` 开始，到 `---` 之前）**完整复制**粘贴到命令中。
 
 **示例**：
 
@@ -209,15 +241,21 @@ specify init .
 
 #### 4.2 导入 Specify（需求规格）
 
+对应 Spec-Kit 的 **Step 3: Create the spec**。
+
 在你的 AI 助手中，使用以下命令：
 
 ```text
 /speckit.specify
 ```
 
-然后将 `spec-template.md` 中 **Specify 章节**的内容（从 `## Specify` 开始，到 `---` 之前）复制粘贴到命令中。
+然后将 `spec-template.md` 中 **Specify 章节**的内容（从 `## Specify` 开始，到 `---` 之前）**完整复制**粘贴到命令中。
+
+> **注意**：Spec-Kit 的 `/speckit.specify` 命令要求关注"要做什么"和"为什么"，而不是技术栈。本模板的 Specify 章节已经按照这个原则编写。
 
 #### 4.3 导入 Plan（实现计划）
+
+对应 Spec-Kit 的 **Step 4: Create a technical implementation plan**。
 
 在你的 AI 助手中，使用以下命令：
 
@@ -225,7 +263,9 @@ specify init .
 /speckit.plan
 ```
 
-然后将 `spec-template.md` 中 **Plan 章节**的内容（从 `## Plan` 开始，到文件末尾）复制粘贴到命令中。
+然后将 `spec-template.md` 中 **Plan 章节**的内容（从 `## Plan` 开始，到文件末尾）**完整复制**粘贴到命令中。
+
+> **注意**：Plan 章节包含技术栈和架构选择，这正是 `/speckit.plan` 命令所需要的内容。
 
 ---
 
