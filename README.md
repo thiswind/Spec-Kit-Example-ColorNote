@@ -57,6 +57,8 @@
 ├── env.example              # 环境变量模板（需复制为 .env 并填写）
 ├── project.config.json      # 项目配置（需填写你的项目信息）
 ├── spec-template.md         # Spec-Kit 三件套模板（包含占位符）
+├── scripts/
+│   └── render-spec.py      # 自动替换占位符的脚本（使用 Jinja2）
 └── README.md               # 本文件
 ```
 
@@ -106,6 +108,11 @@ specify init --help
   npm i -g vercel
   ```
 
+- 配置 Vercel Blob 存储（用于图片上传）：
+  - 在 Vercel 项目设置中启用 Blob Storage
+  - 获取 `BLOB_READ_WRITE_TOKEN`（可在 Vercel Dashboard 的 Environment Variables 中创建）
+  - 或使用 Vercel CLI 命令：`vercel env pull` 获取环境变量
+
 #### 4. 准备 TiDB Cloud 数据库
 
 - 注册 TiDB Cloud 账号
@@ -147,14 +154,33 @@ specify init --help
 
 #### 2.2 处理 `spec-template.md` 中的占位符
 
-在 `spec-template.md` 中，将所有占位符替换为 `project.config.json` 中的实际值：
+**方法一：使用自动化脚本（推荐）**
+
+使用提供的 Python 脚本自动替换占位符：
+
+```bash
+# 确保已安装 Jinja2（如果未安装）
+pip install jinja2
+
+# 运行渲染脚本
+python3 scripts/render-spec.py
+```
+
+脚本会：
+- 读取 `project.config.json` 中的配置值
+- 使用 Jinja2 模板引擎替换 `spec-template.md` 中的所有占位符
+- 生成 `spec-template-rendered.md`（原模板文件保持不变）
+
+**方法二：手动替换**
+
+如果你想手动替换，可以在 `spec-template.md` 中，将所有占位符替换为 `project.config.json` 中的实际值：
 
 - `{{github_owner}}` → `project.config.json` 中的 `github_owner`
 - `{{repo_name}}` → `project.config.json` 中的 `repo_name`
 - `{{default_branch}}` → `project.config.json` 中的 `default_branch`
 - `{{vercel_project_name}}` → `project.config.json` 中的 `vercel_project_name`
 
-你可以使用文本编辑器的查找替换功能，或使用命令行工具（如 `sed`）完成替换。
+你可以使用文本编辑器的查找替换功能完成替换。
 
 #### 2.3 创建并填写 `.env` 文件
 
@@ -181,11 +207,15 @@ DB_POOL_SIZE=5
 DB_MAX_OVERFLOW=10
 DB_POOL_RECYCLE=300
 DB_CONNECT_TIMEOUT=10
+
+# Vercel Blob Storage
+BLOB_READ_WRITE_TOKEN=your-blob-read-write-token
 ```
 
 **注意**：
 
 - `DB_DATABASE` 和 `DB_TEST_DATABASE` 必须非空且不相同
+- `BLOB_READ_WRITE_TOKEN` 必须配置（用于图片上传到 Vercel Blob）
 - 不要将 `.env` 文件提交到 Git（建议添加到 `.gitignore`）
 
 ---
@@ -228,7 +258,9 @@ specify init .
 /speckit.constitution
 ```
 
-然后将 `spec-template.md` 中 **Constitution 章节**的内容（从 `## Constitution` 开始，到 `---` 之前）**完整复制**粘贴到命令中。
+然后将 `spec-template-rendered.md`（或已替换占位符的 `spec-template.md`）中 **Constitution 章节**的内容（从 `## Constitution` 开始，到 `---` 之前）**完整复制**粘贴到命令中。
+
+> **提示**：如果使用了 `scripts/render-spec.py` 脚本，建议使用生成的 `spec-template-rendered.md` 文件，确保所有占位符都已替换。
 
 **示例**：
 
@@ -261,7 +293,7 @@ specify init .
 /speckit.specify
 ```
 
-然后将 `spec-template.md` 中 **Specify 章节**的内容（从 `## Specify` 开始，到 `---` 之前）**完整复制**粘贴到命令中。
+然后将 `spec-template-rendered.md`（或已替换占位符的 `spec-template.md`）中 **Specify 章节**的内容（从 `## Specify` 开始，到 `---` 之前）**完整复制**粘贴到命令中。
 
 > **注意**：Spec-Kit 的 `/speckit.specify` 命令要求关注"要做什么"和"为什么"，而不是技术栈。本模板的 Specify 章节已经按照这个原则编写。
 
@@ -275,7 +307,7 @@ specify init .
 /speckit.plan
 ```
 
-然后将 `spec-template.md` 中 **Plan 章节**的内容（从 `## Plan` 开始，到文件末尾）**完整复制**粘贴到命令中。
+然后将 `spec-template-rendered.md`（或已替换占位符的 `spec-template.md`）中 **Plan 章节**的内容（从 `## Plan` 开始，到文件末尾）**完整复制**粘贴到命令中。
 
 > **注意**：Plan 章节包含技术栈和架构选择，这正是 `/speckit.plan` 命令所需要的内容。
 
@@ -309,9 +341,10 @@ Spec-Kit 会根据你导入的 Plan 内容，生成可执行的开发任务列�
 在开始实现之前，务必完成 Plan 中提到的 Preflight 校验，确保：
 
 - Git 仓库配置正确
-- 环境变量配置完整
+- 环境变量配置完整（包括 `BLOB_READ_WRITE_TOKEN`）
 - 数据库连接正常
 - Vercel 本地环境可用
+- Vercel Blob 存储已配置
 
 ---
 
@@ -366,7 +399,13 @@ Spec-Kit 的设计理念是通过 AI 助手进行交互式开发。使用 `/spec
 
 ### Q3: 如何验证占位符替换是否正确？
 
-替换完成后，检查 `spec-template.md` 中：
+**如果使用脚本**：
+
+运行 `python3 scripts/render-spec.py` 后，脚本会自动验证并显示替换统计。如果看到"✓ 所有占位符已成功替换"，说明替换成功。
+
+**如果手动替换**：
+
+检查 `spec-template.md` 或 `spec-template-rendered.md` 中：
 
 - 不再包含任何 `{{...}}` 格式的占位符
 - 所有 GitHub 仓库 URL 指向正确的仓库
@@ -425,6 +464,7 @@ Spec-Kit 支持多种 AI 助手，包括但不限于：
 - [Spec-Kit 官方仓库](https://github.com/github/spec-kit)
 - [Spec-Kit 文档](https://github.github.com/spec-kit/)
 - [Vercel CLI 文档](https://vercel.com/docs/cli)
+- [Vercel Blob 文档](https://vercel.com/docs/storage/vercel-blob)
 - [TiDB Cloud 文档](https://docs.pingcap.com/tidbcloud/)
 - [Flask 文档](https://flask.palletsprojects.com/)
 
