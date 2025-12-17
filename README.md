@@ -103,7 +103,7 @@ uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
 specify init --help
 ```
 
-#### 2. 准备 GitHub 仓库
+#### 2. 准备 GitHub 仓库并初始化项目
 
 - **重要**：本仓库是模板示例，你需要创建**你自己的** ColorNote 项目仓库
 - 在 GitHub 上创建目标仓库（可以命名为 `ColorNote` 或其他你喜欢的名称）
@@ -112,16 +112,35 @@ specify init --help
   - 仓库名称（例如 `ColorNote`）
   - 默认分支名（通常是 `main`）
 
-**重要步骤**：克隆模板仓库后，必须先删除 `.git/` 目录：
+**使用初始化脚本（推荐）**：
+
+运行初始化脚本，自动完成删除 `.git/`、重新初始化 Git、更新 `project.config.json` 等操作：
+
+```bash
+./scripts/init-project.sh <your-github-username> <your-repo-name> [branch-name]
+```
+
+示例：
+
+```bash
+./scripts/init-project.sh myusername ColorNote main
+```
+
+脚本会自动：
+- 检测并删除模板仓库的 `.git/` 目录
+- 重新初始化 Git 仓库
+- 设置默认分支
+- 添加你的 GitHub 仓库作为 remote origin
+- 更新 `project.config.json` 中的配置值
+
+**手动操作（如果不使用脚本）**：
+
+如果你不想使用脚本，可以手动执行：
 
 ```bash
 # 删除模板仓库的 Git 历史
 rm -rf .git
-```
 
-然后重新初始化 Git，连接到你的项目仓库：
-
-```bash
 # 初始化 Git 仓库
 git init
 
@@ -130,6 +149,8 @@ git remote add origin https://github.com/your-username/ColorNote.git
 
 # 设置默认分支
 git branch -M main
+
+# 手动更新 project.config.json
 ```
 
 > **为什么需要删除 `.git/`？**
