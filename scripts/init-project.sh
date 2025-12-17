@@ -2,12 +2,10 @@
 
 # init-project.sh
 # 初始化项目：删除模板仓库的 .git/，重新初始化 Git 并连接到用户的项目仓库
+# 从 project.config.json 读取配置信息
 #
 # 使用方法：
-#   ./scripts/init-project.sh <your-github-username> <your-repo-name> [branch-name]
-#
-# 示例：
-#   ./scripts/init-project.sh myusername ColorNote main
+#   ./scripts/init-project.sh
 
 set -e  # 遇到错误立即退出
 
@@ -28,19 +26,51 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}项目初始化脚本${NC}"
 echo -e "${BLUE}========================================${NC}\n"
 
-# 检查参数
-if [ $# -lt 2 ]; then
-    echo -e "${RED}错误：参数不足${NC}"
-    echo -e "${YELLOW}使用方法：${NC}"
-    echo -e "  ./scripts/init-project.sh <your-github-username> <your-repo-name> [branch-name]"
-    echo -e "\n${YELLOW}示例：${NC}"
-    echo -e "  ./scripts/init-project.sh myusername ColorNote main"
+# 检查 project.config.json 是否存在
+CONFIG_FILE="$PROJECT_ROOT/project.config.json"
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo -e "${RED}错误：找不到 project.config.json${NC}"
+    echo -e "${YELLOW}请先创建并填写 project.config.json 文件${NC}"
     exit 1
 fi
 
-GITHUB_OWNER="$1"
-REPO_NAME="$2"
-BRANCH_NAME="${3:-main}"  # 默认分支名，如果没有提供则使用 main
+# 读取 project.config.json
+echo -e "${GREEN}读取 project.config.json...${NC}"
+
+# 检查是否安装了 jq
+if command -v jq &> /dev/null; then
+    GITHUB_OWNER=$(jq -r '.github_owner' "$CONFIG_FILE")
+    REPO_NAME=$(jq -r '.repo_name' "$CONFIG_FILE")
+    BRANCH_NAME=$(jq -r '.default_branch' "$CONFIG_FILE")
+    VERCEL_PROJECT_NAME=$(jq -r '.vercel_project_name' "$CONFIG_FILE" 2>/dev/null || echo "")
+elif command -v python3 &> /dev/null; then
+    GITHUB_OWNER=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['github_owner'])")
+    REPO_NAME=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['repo_name'])")
+    BRANCH_NAME=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['default_branch'])")
+    VERCEL_PROJECT_NAME=$(python3 -c "import json; c=json.load(open('$CONFIG_FILE')); print(c.get('vercel_project_name', ''))" 2>/dev/null || echo "")
+else
+    echo -e "${RED}错误：需要安装 jq 或 python3 来解析 JSON${NC}"
+    echo -e "${YELLOW}请安装其中一个：${NC}"
+    echo -e "  macOS: brew install jq"
+    echo -e "  或使用 Python3（通常已预装）"
+    exit 1
+fi
+
+# 验证必需的配置项
+if [ -z "$GITHUB_OWNER" ] || [ "$GITHUB_OWNER" == "null" ]; then
+    echo -e "${RED}错误：project.config.json 中缺少或无效的 github_owner${NC}"
+    exit 1
+fi
+
+if [ -z "$REPO_NAME" ] || [ "$REPO_NAME" == "null" ]; then
+    echo -e "${RED}错误：project.config.json 中缺少或无效的 repo_name${NC}"
+    exit 1
+fi
+
+if [ -z "$BRANCH_NAME" ] || [ "$BRANCH_NAME" == "null" ]; then
+    BRANCH_NAME="main"  # 默认值
+    echo -e "${YELLOW}警告：未指定 default_branch，使用默认值：main${NC}"
+fi
 
 echo -e "${GREEN}配置信息：${NC}"
 echo -e "  GitHub Owner: ${GREEN}$GITHUB_OWNER${NC}"
@@ -90,38 +120,13 @@ echo -e "${GREEN}添加远程仓库...${NC}"
 echo -e "  origin: $REMOTE_URL"
 git remote add origin "$REMOTE_URL"
 
-# 更新 project.config.json
-if [ -f "project.config.json" ]; then
-    echo -e "\n${GREEN}更新 project.config.json...${NC}"
-    
-    # 检查是否安装了 jq
-    if command -v jq &> /dev/null; then
-        # 使用 jq 更新
-        jq ".github_owner = \"$GITHUB_OWNER\" | .repo_name = \"$REPO_NAME\" | .default_branch = \"$BRANCH_NAME\"" project.config.json > project.config.json.tmp
-        mv project.config.json.tmp project.config.json
-    elif command -v python3 &> /dev/null; then
-        # 使用 Python 更新
-        python3 << EOF
-import json
-with open('project.config.json', 'r') as f:
-    config = json.load(f)
-config['github_owner'] = '$GITHUB_OWNER'
-config['repo_name'] = '$REPO_NAME'
-config['default_branch'] = '$BRANCH_NAME'
-with open('project.config.json', 'w') as f:
-    json.dump(config, f, indent=4)
-EOF
-    else
-        echo -e "${YELLOW}警告：未安装 jq 或 python3，无法自动更新 project.config.json${NC}"
-        echo -e "${YELLOW}请手动更新 project.config.json 中的以下字段：${NC}"
-        echo -e "  github_owner: $GITHUB_OWNER"
-        echo -e "  repo_name: $REPO_NAME"
-        echo -e "  default_branch: $BRANCH_NAME"
-    fi
-    
-    echo -e "${GREEN}✓ project.config.json 已更新${NC}"
-else
-    echo -e "${YELLOW}警告：未找到 project.config.json，请手动创建${NC}"
+# 验证 project.config.json 配置是否正确
+echo -e "\n${GREEN}验证 project.config.json 配置...${NC}"
+echo -e "  github_owner: ${GREEN}$GITHUB_OWNER${NC}"
+echo -e "  repo_name: ${GREEN}$REPO_NAME${NC}"
+echo -e "  default_branch: ${GREEN}$BRANCH_NAME${NC}"
+if [ -n "$VERCEL_PROJECT_NAME" ] && [ "$VERCEL_PROJECT_NAME" != "null" ]; then
+    echo -e "  vercel_project_name: ${GREEN}$VERCEL_PROJECT_NAME${NC}"
 fi
 
 # 验证 Git 配置
