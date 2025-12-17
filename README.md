@@ -220,24 +220,14 @@ git branch -M main
 
 使用提供的脚本自动替换占位符：
 
-**方式 A：使用 Shell 脚本（最简单）**
-
 ```bash
-# 直接运行 shell 脚本（会自动检查并安装依赖）
-./scripts/render-spec.sh
-```
-
-**方式 B：使用 Python 脚本**
-
-```bash
-# 先安装依赖（如果未安装）
-pip install -r scripts/requirements.txt
-# 或
-pip install jinja2
-
-# 运行 Python 脚本
+# 运行 Python 脚本（会自动检查并安装依赖）
 python3 scripts/render-spec.py
+# 或
+./scripts/render-spec.py
 ```
+
+脚本会自动检查并安装 Jinja2 依赖（如果未安装）。
 
 脚本会：
 - 读取 `project.config.json` 中的配置值
