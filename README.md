@@ -41,10 +41,12 @@
 ## 📋 如何使用本模板
 
 1. **Fork 或 Clone 本仓库**，获取模板文件
-2. **创建你自己的 ColorNote 项目**（在 GitHub 上创建新仓库）
-3. **在你的项目中初始化 Spec-Kit**：`specify init .`
-4. **使用 AI 助手命令**，将 `spec-template.md` 中的内容复制到相应的 Spec-Kit 命令中
-5. **开始使用 Spec-Kit 进行开发**
+2. **删除 `.git/` 目录**（重要：这是模板仓库的 Git 历史，需要删除后重新初始化）
+3. **创建你自己的 ColorNote 项目**（在 GitHub 上创建新仓库）
+4. **初始化你自己的 Git 仓库**，连接到你的 GitHub 仓库
+5. **在你的项目中初始化 Spec-Kit**：`specify init .`
+6. **使用 AI 助手命令**，将 `spec-template.md` 中的内容复制到相应的 Spec-Kit 命令中
+7. **开始使用 Spec-Kit 进行开发**
 
 ---
 
@@ -102,6 +104,32 @@ specify init --help
   - 仓库 owner（你的 GitHub 用户名或组织名）
   - 仓库名称（例如 `ColorNote`）
   - 默认分支名（通常是 `main`）
+
+**重要步骤**：克隆模板仓库后，必须先删除 `.git/` 目录：
+
+```bash
+# 删除模板仓库的 Git 历史
+rm -rf .git
+```
+
+然后重新初始化 Git，连接到你的项目仓库：
+
+```bash
+# 初始化 Git 仓库
+git init
+
+# 添加你的远程仓库
+git remote add origin https://github.com/your-username/ColorNote.git
+
+# 设置默认分支
+git branch -M main
+```
+
+> **为什么需要删除 `.git/`？**
+>
+> - Preflight 校验要求 Git remote origin 必须匹配 `project.config.json` 中的仓库信息
+> - 模板仓库的 `.git/` 指向模板仓库，而不是你的项目仓库
+> - 保留模板的 Git 历史会导致 Preflight 校验失败
 
 #### 3. 准备 Vercel 项目
 
