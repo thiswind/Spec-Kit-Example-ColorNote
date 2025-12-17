@@ -41,12 +41,18 @@
 ## 📋 如何使用本模板
 
 1. **Fork 或 Clone 本仓库**，获取模板文件
-2. **删除 `.git/` 目录**（重要：这是模板仓库的 Git 历史，需要删除后重新初始化）
-3. **创建你自己的 ColorNote 项目**（在 GitHub 上创建新仓库）
-4. **初始化你自己的 Git 仓库**，连接到你的 GitHub 仓库
-5. **在你的项目中初始化 Spec-Kit**：`specify init .`
-6. **使用 AI 助手命令**，将 `spec-template.md` 中的内容复制到相应的 Spec-Kit 命令中
-7. **开始使用 Spec-Kit 进行开发**
+2. **运行初始化脚本**（自动删除 `.git/` 并重新初始化 Git）：
+   ```bash
+   ./scripts/init-project.sh <your-github-username> <your-repo-name> [branch-name]
+   ```
+   示例：
+   ```bash
+   ./scripts/init-project.sh myusername ColorNote main
+   ```
+3. **创建你自己的 ColorNote 项目**（在 GitHub 上创建新仓库，确保仓库名与脚本参数一致）
+4. **在你的项目中初始化 Spec-Kit**：`specify init .`
+5. **使用 AI 助手命令**，将 `spec-template.md` 中的内容复制到相应的 Spec-Kit 命令中
+6. **开始使用 Spec-Kit 进行开发**
 
 ---
 
@@ -74,6 +80,7 @@
   - 在你的项目中，该文件会被 Preflight 校验读取（见 Plan 章节）
   - **注意**：模板仓库中的是示例，你需要在**自己的项目**中创建并填写该文件
 - **`spec-template.md`**：包含 Constitution（项目宪章）、Specify（需求规格）、Plan（实现计划）三个章节的完整模板，包含占位符需要替换
+- **`scripts/init-project.sh`**：项目初始化脚本，自动删除模板仓库的 `.git/` 目录，重新初始化 Git 并连接到你的项目仓库，同时更新 `project.config.json`
 - **`scripts/render-spec.py`**：Python 脚本，使用 Jinja2 模板引擎自动替换 `spec-template.md` 中的占位符，生成 `spec-template-rendered.md`
 - **`scripts/render-spec.sh`**：Shell 脚本，便捷调用 Python 脚本，自动检查并安装依赖
 - **`scripts/requirements.txt`**：Python 依赖文件，包含 Jinja2（用于模板渲染）
