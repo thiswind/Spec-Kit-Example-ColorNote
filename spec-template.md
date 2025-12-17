@@ -37,7 +37,7 @@
 
 **项目范围**：
 
-- 包含：创建、编辑、删除便利贴；6 种预设颜色主题；列表展示与内容预览；数据持久化（TiDB）。
+- 包含：创建、编辑、删除便利贴；6 种预设颜色主题；列表展示与内容预览；图片上传与展示；数据持久化（TiDB + Vercel Blob）。
 - 不包含：用户登录/账户系统；多设备同步；分享/协同编辑；富文本编辑（仅纯文本）。
 
 ### 技术栈（固定选型）
@@ -45,9 +45,11 @@
 - 后端：Python 3.11，Flask 3.0
 - 前端：Vue.js 3（通过 CDN 引入），Tailwind CSS
 - 数据库：TiDB Cloud（MySQL 兼容）
+- 存储：Vercel Blob（图片存储）
 - ORM：SQLAlchemy
 - 测试：Playwright（E2E），pytest（API/单元测试）
 - 部署：Vercel Serverless Functions
+- CLI 工具：Vercel CLI（用于本地开发与部署操作）
 
 ### 质量与交付红线（项目级）
 
@@ -145,6 +147,27 @@
 2. 点击颜色立即更新编辑面板背景色，并可清晰识别选中状态。
 3. 保存后列表卡片背景色与所选颜色一致，刷新页面后保持一致。
 
+#### 场景 6：图片上传与展示
+
+**用户故事**：
+作为用户，我希望能够在笔记中上传图片，并在列表中看到图片预览。
+
+**验收标准（AC）**：
+
+1. 编辑面板中提供图片上传入口（按钮或图标按钮，可点击区域 ≥ 44×44 px）。
+2. 点击上传入口后，打开设备文件选择器，仅允许选择图片格式（如 jpg、png、gif、webp）。
+3. 选择图片后，300ms 内在编辑面板中显示图片预览（缩略图形式，最大宽度 200px，保持宽高比）。
+4. 图片上传过程中显示加载状态（如进度条或 spinner）。
+5. 上传成功后，图片预览下方显示图片文件名（字体大小 12px，颜色 `#6B7280`）。
+6. 每个笔记最多支持上传 3 张图片；达到上限时，上传入口禁用或提示"最多 3 张图片"。
+7. 单张图片大小限制为 5MB；超过限制时，显示错误提示"图片大小不能超过 5MB"。
+8. 点击 `"Save"` 后：图片上传到 Vercel Blob，笔记保存到 TiDB，图片 URL 存储在数据库中。
+9. 列表卡片中：如果笔记包含图片，在内容预览下方显示第一张图片的缩略图（最大宽度 100px，保持宽高比，圆角 8px）。
+10. 点击列表卡片中的图片：在编辑面板中打开该笔记，显示所有上传的图片。
+11. 编辑笔记时：可以删除已上传的图片（提供删除按钮，点击后立即从预览中移除）。
+12. 删除笔记时：笔记关联的所有图片从 Vercel Blob 中删除。
+13. 刷新页面后，所有图片仍能正常显示（通过 Vercel Blob URL 访问）。
+
 ### 2.2 移动端适配要求
 
 **目标设备**：
@@ -200,6 +223,7 @@ Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/
 
    - 必须能读取到 `.env` 中的 DB_* 变量；
    - `DB_DATABASE` 与 `DB_TEST_DATABASE` 均非空且不相同。
+   - 必须能读取到 `BLOB_READ_WRITE_TOKEN`（用于 Vercel Blob 存储）。
 
 3. 数据库连通性与权限校验：
 
@@ -210,6 +234,8 @@ Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/
 4. Vercel 本地一致性校验：
 
    - 本地开发与测试必须使用 `vercel dev` 启动。
+   - 确保已安装 Vercel CLI：`npm i -g vercel` 或通过其他方式安装。
+   - 确保 `BLOB_READ_WRITE_TOKEN` 环境变量已配置（可通过 `vercel env pull` 获取，或手动在 `.env` 中配置）。
 
 ### 3.2 架构设计
 
@@ -228,22 +254,30 @@ Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/
 
 - `GET /`：返回主页面 HTML。
 - `GET /api/notes`：获取列表。
-- `POST /api/notes`：创建。
-- `PUT /api/notes/<id>`：更新。
-- `DELETE /api/notes/<id>`：删除。
+- `POST /api/notes`：创建（支持图片上传）。
+- `PUT /api/notes/<id>`：更新（支持图片上传和删除）。
+- `DELETE /api/notes/<id>`：删除（同时删除关联的图片）。
+- `POST /api/notes/<id>/images`：上传图片到指定笔记（可选，也可在创建/更新时一并上传）。
 
 ### 3.3 数据模型与持久化（TiDB + ORM）
 
 **表名**：`notes`。
 
-| 字段名     | 类型     | 约束                         | 说明     |
-| ---------- | -------- | ---------------------------- | -------- |
-| id         | 整数     | 主键，自增                   | 唯一标识 |
-| title      | 字符串   | ≤30，非空                    | 标题     |
-| content    | 文本     | ≤500，非空                   | 内容     |
-| color      | 字符串   | 长度 7，非空，默认 `#FFE57F` | HEX 颜色 |
-| created_at | 日期时间 | 默认 `NOW()`                 | 创建时间 |
-| updated_at | 日期时间 | 默认 `NOW()`，更新自动刷新   | 更新时间 |
+| 字段名     | 类型     | 约束                         | 说明           |
+| ---------- | -------- | ---------------------------- | -------------- |
+| id         | 整数     | 主键，自增                   | 唯一标识       |
+| title      | 字符串   | ≤30，非空                    | 标题           |
+| content    | 文本     | ≤500，非空                   | 内容           |
+| color      | 字符串   | 长度 7，非空，默认 `#FFE57F` | HEX 颜色       |
+| image_urls | JSON     | 可为空，最多 3 个 URL        | 图片 URL 数组  |
+| created_at | 日期时间 | 默认 `NOW()`                 | 创建时间       |
+| updated_at | 日期时间 | 默认 `NOW()`，更新自动刷新   | 更新时间       |
+
+**图片存储**：
+
+- 图片存储在 Vercel Blob 中，数据库仅存储图片 URL。
+- `image_urls` 字段为 JSON 数组，格式：`["https://xxx.vercel-storage.com/image1.jpg", ...]`。
+- 每个笔记最多存储 3 个图片 URL。
 
 **实现要求**：
 
@@ -253,11 +287,33 @@ Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/
 
 ### 3.4 API 合同与校验逻辑
 
-- `GET /api/notes`：按 `created_at` 降序返回。
-- `POST /api/notes`：接收 `{title, content, color}`，进行字段校验后创建并返回完整对象（含 id 与时间戳）。
-- `PUT /api/notes/<id>`：同样进行字段校验，更新并返回更新后的对象（updated_at 刷新）。
-- `DELETE /api/notes/<id>`：物理删除并返回 `{success: true}`。
+- `GET /api/notes`：按 `created_at` 降序返回，包含 `image_urls` 字段。
+- `POST /api/notes`：接收 `{title, content, color, images}`（images 为文件数组），进行字段校验后：
+  - 将图片上传到 Vercel Blob（使用 `@vercel/blob` Python SDK 或 REST API）
+  - 获取图片 URL 数组
+  - 创建笔记并返回完整对象（含 id、时间戳、image_urls）
+- `PUT /api/notes/<id>`：接收 `{title, content, color, images, deleted_image_urls}`，进行字段校验后：
+  - 上传新图片到 Vercel Blob
+  - 从 Vercel Blob 删除 `deleted_image_urls` 中的图片
+  - 更新笔记并返回更新后的对象（updated_at 刷新）
+- `DELETE /api/notes/<id>`：
+  - 从 Vercel Blob 删除该笔记关联的所有图片
+  - 物理删除数据库记录
+  - 返回 `{success: true}`
 - 错误格式统一：`{"error": "错误描述"}`。
+
+**图片上传实现要求**：
+
+- 使用 Vercel Blob 存储服务，通过 `BLOB_READ_WRITE_TOKEN` 环境变量进行认证。
+- 图片上传实现方式（二选一）：
+  1. **使用 Vercel CLI**：通过 `vercel blob put <file>` 命令上传，获取返回的 URL。
+  2. **使用 Python SDK**：安装 `vercel-blob` Python 包（如果可用），或使用 Vercel Blob REST API。
+- 图片路径格式：`notes/{note_id}/{timestamp}_{filename}`，确保唯一性。
+- 图片访问权限：`public`，允许通过 URL 直接访问。
+- 单张图片大小限制：5MB，上传前进行校验。
+- 每个笔记最多 3 张图片，创建/更新时进行校验。
+- 图片删除：使用 `vercel blob rm <url>` 命令或相应的 API 删除。
+- 所有 Vercel Blob 操作必须通过 Vercel CLI 或官方 API 完成，禁止使用第三方工具。
 
 ### 3.5 测试落地方案（目录、隔离、断言）
 
