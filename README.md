@@ -63,7 +63,10 @@
 ### 文件用途
 
 - **`env.example`**：环境变量配置模板，包含数据库连接、应用环境等配置项
-- **`project.config.json`**：项目元信息配置，用于替换 `spec-template.md` 中的占位符
+- **`project.config.json`**：项目元信息配置示例文件，包含以下用途：
+  - 用于替换 `spec-template.md` 中的占位符
+  - 在你的项目中，该文件会被 Preflight 校验读取（见 Plan 章节）
+  - **注意**：模板仓库中的是示例，你需要在**自己的项目**中创建并填写该文件
 - **`spec-template.md`**：包含 Constitution（项目宪章）、Specify（需求规格）、Plan（实现计划）三个章节的完整模板，包含占位符需要替换
 
 ---
@@ -119,9 +122,17 @@ specify init --help
 
 ### 第二步：配置项目信息
 
-#### 2.1 填写 `project.config.json`
+#### 2.1 在你的项目中创建并填写 `project.config.json`
 
-编辑 `project.config.json`，将占位符替换为你的实际项目信息：
+> **重要说明**：
+>
+> - 模板仓库中的 `project.config.json` 是**示例文件**
+> - 你需要在**你自己的 ColorNote 项目**中创建该文件
+> - 该文件有两个用途：
+>   1. 用于替换 `spec-template.md` 中的占位符
+>   2. 在 Preflight 校验中使用（Plan 章节中会读取此文件进行 Git/Vercel 相关校验）
+
+在你的项目根目录创建 `project.config.json`，填写你的实际项目信息：
 
 ```json
 {
@@ -132,7 +143,7 @@ specify init --help
 }
 ```
 
-**重要**：这个文件是模板渲染的单一事实来源（SSOT），所有占位符替换都基于此文件。
+**重要**：这个文件是模板渲染和 Preflight 校验的单一事实来源（SSOT），所有占位符替换和校验都基于此文件。
 
 #### 2.2 处理 `spec-template.md` 中的占位符
 
@@ -362,30 +373,41 @@ Spec-Kit 的设计理念是通过 AI 助手进行交互式开发。使用 `/spec
 - 所有分支名与实际仓库分支一致
 - Vercel 项目名与实际项目一致
 
-### Q4: 如果修改了 `project.config.json`，需要重新导入吗？
+### Q4: `project.config.json` 应该放在哪里？
 
-是的。如果修改了 `project.config.json`，需要：
+`project.config.json` 应该放在**你自己的 ColorNote 项目**的根目录中，而不是模板仓库中。
 
-1. 重新替换 `spec-template.md` 中的占位符
+- **模板仓库中的 `project.config.json`**：只是示例文件，用于参考格式
+- **你项目中的 `project.config.json`**：实际使用的配置文件，用于：
+  - 替换 `spec-template.md` 中的占位符
+  - Preflight 校验时读取（Plan 章节中会使用此文件进行 Git/Vercel 相关校验）
+
+### Q5: 如果修改了 `project.config.json`，需要重新导入吗？
+
+是的。如果修改了你项目中的 `project.config.json`，需要：
+
+1. 重新替换 `spec-template.md` 中的占位符（使用新的配置值）
 2. 重新使用 AI 助手命令导入更新后的规范内容
+3. 确保 Preflight 校验能够读取到更新后的配置
 
-### Q5: `.env` 文件应该提交到 Git 吗？
+### Q6: `.env` 文件应该提交到 Git 吗？
 
 **不应该**。`.env` 包含敏感信息（数据库密码等），应该添加到 `.gitignore` 中。只提交 `env.example` 作为模板。
 
-### Q6: 这个仓库是实际项目还是模板？
+### Q7: 这个仓库是实际项目还是模板？
 
 这是一个**示例模板仓库**（`Spec-Kit-Example-ColorNote`），用于学习和演示 Spec-Kit 的使用方法。你需要：
 
 1. Fork 或 Clone 本仓库，获取模板文件
 2. 创建你自己的 ColorNote 项目仓库
-3. 在你的项目中初始化 Spec-Kit：`specify init .`
-4. 使用 AI 助手命令，将模板内容导入到 Spec-Kit
-5. 开始实际的项目开发
+3. 在你的项目中创建 `project.config.json` 和 `.env` 文件（参考模板中的示例）
+4. 在你的项目中初始化 Spec-Kit：`specify init .`
+5. 使用 AI 助手命令，将模板内容导入到 Spec-Kit
+6. 开始实际的项目开发
 
 本仓库本身不包含实际运行的项目代码，只包含模板文件和配置示例。
 
-### Q7: 支持哪些 AI 助手？
+### Q8: 支持哪些 AI 助手？
 
 Spec-Kit 支持多种 AI 助手，包括但不限于：
 
