@@ -1,0 +1,284 @@
+# ColorNote - Spec-Kit 规范文档（3 章严格版）
+
+> Template variables required:
+>
+> - github_owner
+> - repo_name
+> - default_branch
+> - vercel_project_name
+>
+> Configuration sources:
+>
+> 1. project.config.json provides repo/vercel/branch values (single source of truth).
+> 2. .env provides database credentials and runtime config.
+
+---
+
+## Constitution
+
+**项目名称**：ColorNote - 全栈便利贴应用
+
+**GitHub 仓库名**：`{{repo_name}}`  
+**Vercel 项目名**：`{{vercel_project_name}}`
+
+### 项目元信息（强约束）
+
+- GitHub repository: `{{github_owner}}/{{repo_name}}`
+- Default branch: `{{default_branch}}`
+- Git remote (origin): `https://github.com/{{github_owner}}/{{repo_name}}.git`
+
+**Guardrail**：实现过程中必须使用上述仓库与分支命名；禁止生成与之不一致的仓库名、远程名或默认分支。
+
+### 项目描述与范围
+
+**项目描述**：一个针对移动端竖屏优化的彩色便利贴单页应用（SPA），提供创建、浏览、编辑、删除笔记的核心能力，并保证在本地 `vercel dev` 与 Vercel 预览/生产环境行为一致。
+
+**目标用户**：需要在手机浏览器里快速记录想法、待办事项的个人用户，以竖屏使用为主。
+
+**项目范围**：
+
+- 包含：创建、编辑、删除便利贴；6 种预设颜色主题；列表展示与内容预览；数据持久化（TiDB）。
+- 不包含：用户登录/账户系统；多设备同步；分享/协同编辑；富文本编辑（仅纯文本）。
+
+### 技术栈（固定选型）
+
+- 后端：Python 3.11，Flask 3.0
+- 前端：Vue.js 3（通过 CDN 引入），Tailwind CSS
+- 数据库：TiDB Cloud（MySQL 兼容）
+- ORM：SQLAlchemy
+- 测试：Playwright（E2E），pytest（API/单元测试）
+- 部署：Vercel Serverless Functions
+
+### 质量与交付红线（项目级）
+
+- 核心 CRUD 流程必须具备端到端测试覆盖（创建、读取、更新、删除）。
+- 本地 `vercel dev` 与 Vercel 预览/生产环境行为必须一致。
+- 移动端体验目标：首屏加载时间 < 2 秒，交互响应时间（点击到 UI 反馈）< 300ms（P95）。
+
+> 注：本版本不使用 Figma 或视觉回归工具作为验收手段；UI 验收以可量化的布局/样式规范与 E2E 断言为准。
+
+---
+
+## Specify
+
+> 需求部分只描述“要做什么”和“如何验证做对了”，不涉及任何具体代码实现。
+
+### 2.1 功能模块：核心笔记管理（CRUD）
+
+#### 场景 1：创建新笔记
+
+**用户故事**：
+作为用户，我点击底部的 "+" 按钮，希望能输入标题和内容并保存，保存后立即能在列表顶部看到新笔记。
+
+**验收标准（AC）**：
+
+1. 点击底部 "+" 按钮后，300ms 内编辑面板自底部向上滑入，动画持续约 250ms，缓动为 ease-out。
+2. 编辑面板出现时，背景区域出现半透明黑色遮罩层，opacity 为 0.5。
+3. 编辑面板包含：标题输入框（placeholder 为 `"Title"`）、内容文本区域（placeholder 为 `"Write something..."`）、颜色选择器（6 色）。
+4. 默认颜色为 `#FFE57F`（黄色），编辑面板背景色应用该颜色。
+5. 标题：最长 30 字符；超过时禁止继续输入，并显示红色字符计数（如 `"31/30"`，等价于 Tailwind `red-500` 级别的可见红色）。
+6. 内容：最长 500 字符；达到限制时禁止继续输入。
+7. 点击 `"Save"` 后：200ms 内关闭编辑面板并回到列表；新笔记出现在列表顶部且字段值与输入一致。
+8. 刷新页面后，新创建笔记仍存在（已持久化到 TiDB）。
+
+#### 场景 2：笔记列表展示
+
+**用户故事**：
+作为用户，我希望看到所有笔记按时间倒序排列，并且在移动端有良好的阅读体验。
+
+**验收标准（AC）**：
+
+1. 页面加载完成时向后端请求笔记列表数据，并在 500ms 内完成渲染（不含冷启动极端情况；冷启动见 2.4）。
+2. 笔记按 `created_at` 降序排列（最新在顶部）。
+3. 每个笔记卡片展示：
+   - 标题：完整展示，字体大小 16px，字体粗细 600（或等效视觉粗体）。
+   - 内容预览：字体大小 14px；基于视口宽度 375px 的布局下最多显示 3 行；超出使用省略号截断。
+   - 背景色：使用该笔记的 `color` 字段值。
+4. 卡片间垂直间距 16px；页面左右内边距 20px。
+5. 点击任意卡片：300ms 内打开编辑面板，并自动填充该笔记当前标题、内容、颜色。
+6. 空状态：无笔记时显示居中文案 `"No notes yet. Create your first note."`，字体大小 14px，颜色 `#9CA3AF`。
+7. 列表滚动流畅；在目标设备上无明显卡顿。
+
+#### 场景 3：编辑现有笔记
+
+**用户故事**：
+作为用户，我点击一个已有笔记，希望可以修改标题、内容或颜色，并保存修改。
+
+**验收标准（AC）**：
+
+1. 点击卡片后打开编辑面板，动画与遮罩行为与“创建新笔记”一致。
+2. 编辑面板默认填充该笔记最新数据（title/content/color）。
+3. 用户可修改标题（≤30）、内容（≤500）、颜色（6 色之一）。
+4. 切换颜色后编辑面板背景立即更新；颜色选择器明确展示当前选中状态（例如边框高亮或对勾）。
+5. 点击 `"Save"` 后：200ms 内关闭编辑面板；列表卡片内容、颜色立即更新；`updated_at` 刷新为当前时间。
+6. 刷新页面后修改仍存在；通过 API 获取数据应反映最新值。
+
+#### 场景 4：删除笔记
+
+**用户故事**：
+作为用户，我希望能够删除不再需要的笔记，并且删除操作是明确且可确认的。
+
+**验收标准（AC）**：
+
+1. 编辑面板右上角提供红色 `"Delete"` 操作入口（按钮或图标按钮均可，但需可访问并可点击）。
+2. 点击 `"Delete"` 弹出确认对话框：
+   - 文案为 `"Are you sure you want to delete this note?"`；
+   - 按钮为 `"Cancel"` 与 `"Delete"`。
+3. 点击 `"Cancel"`：关闭对话框，返回编辑面板，数据不变。
+4. 点击确认 `"Delete"`：200ms 内关闭对话框与编辑面板；列表中对应卡片移除（允许淡出动画）；数据库记录物理删除。
+5. 刷新页面后该笔记不再出现；通过 API 查询该 id 不应返回记录。
+
+#### 场景 5：颜色主题选择
+
+**预设颜色**：
+
+1. `#FFE57F`（Yellow）
+2. `#FFB3BA`（Pink）
+3. `#BAE1FF`（Blue）
+4. `#BAFFC9`（Green）
+5. `#E0BBE4`（Purple）
+6. `#FFDAC1`（Orange）
+
+**验收标准（AC）**：
+
+1. 新建与编辑面板内均提供颜色选择器；每个颜色按钮可点击区域 ≥ 44×44 px。
+2. 点击颜色立即更新编辑面板背景色，并可清晰识别选中状态。
+3. 保存后列表卡片背景色与所选颜色一致，刷新页面后保持一致。
+
+### 2.2 移动端适配要求
+
+**目标设备**：
+
+- iPhone 15 Pro（393×852）作为基准设备。
+- iPhone 15 Pro Max（430×932）及主流 Android 机型（视口宽度 360–412 px）作为兼容目标。
+
+**验收标准（AC）**：
+
+1. 页面 `<head>` 包含 viewport meta：`width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no`。
+2. 布局基于宽度 375px 设计；最大内容宽度 ≤ 480px；超出部分水平居中。
+3. 所有可点击控件最小可点击区域 ≥ 44×44 px。
+4. 竖屏为主要支持模式；横屏无需专门优化，可提示或保持可用。
+5. 在目标设备上：列表滚动顺畅；按钮点击有明显视觉反馈（如颜色加深或阴影变化）。
+
+### 2.3 部署与环境一致性要求
+
+**部署平台**：Vercel Serverless Functions。
+
+**验收标准（AC）**：
+
+1. 本地开发必须使用 `vercel dev` 启动（禁止使用 `flask run` 作为日常入口）。
+2. 每次 PR 或推送触发 GitHub Actions：运行单元/API/E2E 测试；测试通过后部署到 Vercel 预览环境；使用预览 URL 再跑一次 E2E。
+3. 只有当预览环境 E2E 全部通过，才允许合并到主分支并触发生产部署。
+4. 不允许出现“本地可用、预览/生产不可用”的行为差异。
+
+### 2.4 冷启动与性能要求（Serverless）
+
+**验收标准（AC）**：
+
+1. 针对 Vercel Serverless 冷启动：允许首个请求更高延迟，但必须在 UI 上提供明确加载反馈（如 skeleton 或 loading 状态）。
+2. 非冷启动情况下：主要交互（打开编辑面板、保存后回到列表、删除后列表更新）UI 反馈 < 300ms（P95）。
+
+---
+
+## Plan
+
+> Plan 只描述“怎么做”，不重复 AC；所有可验收口径必须留在 Specify。
+
+### 3.1 开发前置校验（Preflight）
+
+Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/Vercel 相关校验。
+
+在开始任何业务代码实现之前，必须先完成以下校验；任意一项失败则停止实现并报告错误原因与修复建议：
+
+1. Git 元信息校验：
+
+   - 当前仓库 remote `origin` 必须为 `https://github.com/{{github_owner}}/{{repo_name}}.git`；
+   - 默认分支必须为 `{{default_branch}}`；
+   - 本地仓库名与宪章中声明一致。
+
+2. 环境变量校验：
+
+   - 必须能读取到 `.env` 中的 DB_* 变量；
+   - `DB_DATABASE` 与 `DB_TEST_DATABASE` 均非空且不相同。
+
+3. 数据库连通性与权限校验：
+
+   - 能连接 TiDB（DB_HOST/DB_PORT/DB_USERNAME/DB_PASSWORD）；
+   - `DB_DATABASE` 与 `DB_TEST_DATABASE` 均可访问；
+   - 在 `DB_TEST_DATABASE` 中具备创建/删除表权限（用于测试隔离）。
+
+4. Vercel 本地一致性校验：
+
+   - 本地开发与测试必须使用 `vercel dev` 启动。
+
+### 3.2 架构设计
+
+**架构模式**：
+
+- Flask 单体应用（Monolith）。
+- 服务端返回基础 HTML（含 Vue 挂载点）+ Vue 客户端渲染与交互（CSR）。
+
+**前后端组织**：
+
+- 后端：`app/`，使用 Blueprints 管理主页面与 API。
+- 前端：`app/templates/index.html` 输出 DOM 框架；静态资源在 `app/static/js/app.js`、`app/static/css/custom.css`。
+- Vue 3 与 Tailwind CSS 通过 CDN 引入。
+
+**路由设计**：
+
+- `GET /`：返回主页面 HTML。
+- `GET /api/notes`：获取列表。
+- `POST /api/notes`：创建。
+- `PUT /api/notes/<id>`：更新。
+- `DELETE /api/notes/<id>`：删除。
+
+### 3.3 数据模型与持久化（TiDB + ORM）
+
+**表名**：`notes`。
+
+| 字段名     | 类型     | 约束                         | 说明     |
+| ---------- | -------- | ---------------------------- | -------- |
+| id         | 整数     | 主键，自增                   | 唯一标识 |
+| title      | 字符串   | ≤30，非空                    | 标题     |
+| content    | 文本     | ≤500，非空                   | 内容     |
+| color      | 字符串   | 长度 7，非空，默认 `#FFE57F` | HEX 颜色 |
+| created_at | 日期时间 | 默认 `NOW()`                 | 创建时间 |
+| updated_at | 日期时间 | 默认 `NOW()`，更新自动刷新   | 更新时间 |
+
+**实现要求**：
+
+- 使用 SQLAlchemy ORM 定义模型 `Note`；时间字段通过 ORM 或数据库机制自动维护。
+- 使用 `NoteRepository` 作为数据库访问边界，对外提供 create/get_all/update/delete 四类能力。
+- 内部使用 SQLAlchemy Session 事务管理，异常时回滚并返回统一错误格式。
+
+### 3.4 API 合同与校验逻辑
+
+- `GET /api/notes`：按 `created_at` 降序返回。
+- `POST /api/notes`：接收 `{title, content, color}`，进行字段校验后创建并返回完整对象（含 id 与时间戳）。
+- `PUT /api/notes/<id>`：同样进行字段校验，更新并返回更新后的对象（updated_at 刷新）。
+- `DELETE /api/notes/<id>`：物理删除并返回 `{success: true}`。
+- 错误格式统一：`{"error": "错误描述"}`。
+
+### 3.5 测试落地方案（目录、隔离、断言）
+
+**测试目录结构**：
+
+- `tests/api/test_api_routes.py`：API 行为与校验（pytest）。
+- `tests/e2e/*.py`：Playwright E2E 覆盖 CRUD 与关键样式断言。
+- `tests/conftest.py`：统一 fixtures（启动 `vercel dev`、等待就绪、测试数据清理）。
+
+**数据库隔离**：
+
+- 测试必须使用独立 TiDB 数据库或独立 schema。
+- 每个测试用例清理其创建的数据，保证可重复执行。
+
+**E2E 断言策略（实现侧）**：
+
+- UI 层：元素存在/可见/可点击/关键样式可被选择器断言。
+- 数据层：关键操作后通过 API 校验数据状态与字段值。
+
+### 3.6 运行方式与 CI/CD
+
+- 本地开发与测试统一入口：`vercel dev`。
+- CI（GitHub Actions）：先跑 pytest（单元/API），再跑本地 `vercel dev` 下 E2E；部署到 Vercel 预览环境后，针对预览 URL 再跑一次 E2E。
+
