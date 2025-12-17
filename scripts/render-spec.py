@@ -151,9 +151,13 @@ def main():
 
     # 统计替换次数
     print("\n替换统计：")
-    for key in required_keys:
-        count = rendered_content.count(config[key])
-        print(f"  {key}: {count} 处")
+    for key in required_keys + optional_keys:
+        value = config.get(key, "")
+        if value:
+            count = rendered_content.count(value)
+            print(f"  {key}: {count} 处")
+        else:
+            print(f"  {key}: (未设置，跳过统计)")
 
     print(f"\n✓ 渲染完成！")
     print(f"输出文件：{output_file}")
