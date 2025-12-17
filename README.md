@@ -41,17 +41,17 @@
 ## 📋 如何使用本模板
 
 1. **Fork 或 Clone 本仓库**，获取模板文件
-2. **填写 `project.config.json`**，填入你的项目信息：
+2. **在 GitHub 上创建你的 ColorNote 项目仓库**（记录仓库 owner 和名称）
+3. **填写 `project.config.json`**，填入你的项目信息：
    - `github_owner`：你的 GitHub 用户名或组织名
-   - `repo_name`：你的项目仓库名称
+   - `repo_name`：你的项目仓库名称（必须与步骤 2 中创建的仓库名一致）
    - `default_branch`：默认分支名（通常是 `main`）
    - `vercel_project_name`：Vercel 项目名称（可选）
-3. **运行初始化脚本**（自动删除 `.git/` 并重新初始化 Git）：
+4. **运行初始化脚本**（自动删除 `.git/` 并重新初始化 Git）：
    ```bash
    ./scripts/init-project.sh
    ```
    脚本会从 `project.config.json` 读取配置，自动完成初始化
-4. **创建你自己的 ColorNote 项目**（在 GitHub 上创建新仓库，确保仓库名与 `project.config.json` 中的 `repo_name` 一致）
 5. **在你的项目中初始化 Spec-Kit**：`specify init .`
 6. **使用 AI 助手命令**，将 `spec-template.md` 中的内容复制到相应的 Spec-Kit 命令中
 7. **开始使用 Spec-Kit 进行开发**
