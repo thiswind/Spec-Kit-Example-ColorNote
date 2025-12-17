@@ -31,39 +31,38 @@
 
 ### 项目描述与范围
 
-**项目描述**：一个针对移动端竖屏优化的彩色便利贴单页应用（SPA），提供创建、浏览、编辑、删除笔记的核心能力，并保证在本地 `vercel dev` 与 Vercel 预览/生产环境行为一致。
+**项目描述**：一个针对移动端竖屏优化的彩色便利贴单页应用（SPA），提供创建、浏览、编辑、删除笔记的核心能力，并保证在本地 `vercel dev` 与 Vercel 生产环境行为一致。
 
 **目标用户**：需要在手机浏览器里快速记录想法、待办事项的个人用户，以竖屏使用为主。
 
 **项目范围**：
 
-- 包含：创建、编辑、删除便利贴；6 种预设颜色主题；列表展示与内容预览；图片上传与展示；数据持久化（TiDB + Vercel Blob）。
+- 包含：创建、编辑、删除便利贴；6 种预设颜色主题；列表展示与内容预览；图片上传与展示；数据持久化（云数据库 + 云存储）。
 - 不包含：用户登录/账户系统；多设备同步；分享/协同编辑；富文本编辑（仅纯文本）。
 
-### 技术栈（固定选型）
+### 技术栈约束原则
 
-- 后端：Python 3.11，Flask 3.0
-- 前端：Vue.js 3（通过 CDN 引入），Tailwind CSS
-- 数据库：TiDB Cloud（MySQL 兼容）
-- 存储：Vercel Blob（图片存储）
-- ORM：SQLAlchemy
-- 测试：Playwright（E2E），pytest（API/单元测试）
-- 部署：Vercel Serverless Functions
-- CLI 工具：Vercel CLI（用于本地开发与部署操作）
+- 后端：必须使用 Python 3.11+，Web 框架需支持 Serverless 部署。
+- 前端：必须使用现代前端框架（支持 CDN 引入），必须支持移动端响应式设计。
+- 数据库：必须使用云数据库服务（MySQL 兼容），支持 JSON 字段类型。
+- 存储：图片必须存储在云存储服务中，禁止将图片数据以 base64 格式存入数据库。
+- 测试：必须包含端到端测试（E2E）和 API 测试框架。
+- 部署：必须使用 Serverless Functions 架构，本地开发环境必须与生产环境一致。
+- 开发工具：必须使用 Vercel CLI 进行本地开发与部署。
 
 ### 质量与交付红线（项目级）
 
 - 核心 CRUD 流程必须具备端到端测试覆盖（创建、读取、更新、删除）。
-- 本地 `vercel dev` 与 Vercel 预览/生产环境行为必须一致。
+- 本地 `vercel dev` 与 Vercel 生产环境行为必须一致。
 - 移动端体验目标：首屏加载时间 < 2 秒，交互响应时间（点击到 UI 反馈）< 300ms（P95）。
 
-> 注：本版本不使用 Figma 或视觉回归工具作为验收手段；UI 验收以可量化的布局/样式规范与 E2E 断言为准。
+> 注：UI 验收以可量化的布局/样式规范与端到端测试（E2E）断言为准。
 
 ---
 
 ## Specify
 
-> 需求部分只描述“要做什么”和“如何验证做对了”，不涉及任何具体代码实现。
+> 需求部分只描述"要做什么"和"如何验证做对了"，不涉及任何具体代码实现。
 
 ### 2.1 功能模块：核心笔记管理（CRUD）
 
@@ -108,7 +107,7 @@
 
 **验收标准（AC）**：
 
-1. 点击卡片后打开编辑面板，动画与遮罩行为与“创建新笔记”一致。
+1. 点击卡片后打开编辑面板，动画与遮罩行为与"创建新笔记"一致。
 2. 编辑面板默认填充该笔记最新数据（title/content/color）。
 3. 用户可修改标题（≤30）、内容（≤500）、颜色（6 色之一）。
 4. 切换颜色后编辑面板背景立即更新；颜色选择器明确展示当前选中状态（例如边框高亮或对勾）。
@@ -190,9 +189,9 @@
 **验收标准（AC）**：
 
 1. 本地开发必须使用 `vercel dev` 启动（禁止使用 `flask run` 作为日常入口）。
-2. 每次 PR 或推送触发 GitHub Actions：运行单元/API/E2E 测试；测试通过后部署到 Vercel 预览环境；使用预览 URL 再跑一次 E2E。
-3. 只有当预览环境 E2E 全部通过，才允许合并到主分支并触发生产部署。
-4. 不允许出现“本地可用、预览/生产不可用”的行为差异。
+2. 每次 PR 或推送触发 GitHub Actions：运行单元/API/E2E 测试；测试通过后部署到 Vercel 生产环境。
+3. 最终功能验证必须在 Vercel 生产环境进行，确保生产环境行为符合所有验收标准。
+4. 不允许出现"本地可用、生产不可用"的行为差异。
 
 ### 2.4 冷启动与性能要求（Serverless）
 
@@ -205,7 +204,7 @@
 
 ## Plan
 
-> Plan 只描述“怎么做”，不重复 AC；所有可验收口径必须留在 Specify。
+> Plan 只描述"怎么做"，不重复 AC；所有可验收口径必须留在 Specify。
 
 ### 3.1 开发前置校验（Preflight）
 
@@ -221,9 +220,13 @@ Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/
 
 2. 环境变量校验：
 
-   - 必须能读取到 `.env` 中的 DB_* 变量；
+   - 必须能读取到 `.env` 中的 DB\_\* 变量；
    - `DB_DATABASE` 与 `DB_TEST_DATABASE` 均非空且不相同。
-   - 必须能读取到 `BLOB_READ_WRITE_TOKEN`（用于 Vercel Blob 存储）。
+   - 必须能读取到 `BLOB_READ_WRITE_TOKEN`（用于 Vercel Blob 存储，图片必须存储在 Blob 中，不能使用 base64 存入数据库）。
+   - 如果本地 `.env` 文件中没有 `BLOB_READ_WRITE_TOKEN`，必须使用 Vercel CLI 工具获取：
+     - 运行 `vercel env pull .env.local` 从 Vercel 项目拉取环境变量
+     - 或运行 `vercel env pull .env` 直接更新 `.env` 文件
+     - 确保从 Vercel Dashboard 中已配置该环境变量（如未配置，需先在 Dashboard 中配置）
 
 3. 数据库连通性与权限校验：
 
@@ -235,9 +238,42 @@ Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/
 
    - 本地开发与测试必须使用 `vercel dev` 启动。
    - 确保已安装 Vercel CLI：`npm i -g vercel` 或通过其他方式安装。
-   - 确保 `BLOB_READ_WRITE_TOKEN` 环境变量已配置（可通过 `vercel env pull` 获取，或手动在 `.env` 中配置）。
+   - 必须配置 `BLOB_READ_WRITE_TOKEN` 环境变量：
+     - **如果本地 `.env` 文件中没有该变量**：必须使用 Vercel CLI 工具获取：
+       - 运行 `vercel env pull .env.local` 或 `vercel env pull .env` 从 Vercel 项目拉取环境变量
+       - 确保 Vercel 项目中已配置该环境变量（如未配置，需先在 Vercel Dashboard 中配置）
+     - **如果 Vercel 项目中也没有配置**：必须在 Vercel Dashboard 中配置该环境变量，然后使用 CLI 拉取
+   - 由于 TiDB 性能限制，图片必须存储在 Vercel Blob 中，禁止使用 base64 数据存入数据库。`BLOB_READ_WRITE_TOKEN` 是必须的，不允许跳过或使用 fallback。
 
-### 3.2 架构设计
+### 3.2 技术栈选型
+
+**后端技术栈**：
+
+- Python 3.11
+- Flask 3.0（Web 框架）
+- SQLAlchemy（ORM）
+
+**前端技术栈**：
+
+- Vue.js 3（通过 CDN 引入）
+- Tailwind CSS（通过 CDN 引入）
+
+**数据库与存储**：
+
+- TiDB Cloud（MySQL 兼容的云数据库）
+- Vercel Blob（云存储服务，用于图片存储）
+
+**测试框架**：
+
+- Playwright（E2E 测试）
+- pytest（API/单元测试）
+
+**部署与工具**：
+
+- Vercel Serverless Functions（部署平台）
+- Vercel CLI（本地开发与部署工具）
+
+### 3.3 架构设计
 
 **架构模式**：
 
@@ -259,23 +295,23 @@ Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/
 - `DELETE /api/notes/<id>`：删除（同时删除关联的图片）。
 - `POST /api/notes/<id>/images`：上传图片到指定笔记（可选，也可在创建/更新时一并上传）。
 
-### 3.3 数据模型与持久化（TiDB + ORM）
+### 3.4 数据模型与持久化（TiDB + ORM）
 
 **表名**：`notes`。
 
-| 字段名     | 类型     | 约束                         | 说明           |
-| ---------- | -------- | ---------------------------- | -------------- |
-| id         | 整数     | 主键，自增                   | 唯一标识       |
-| title      | 字符串   | ≤30，非空                    | 标题           |
-| content    | 文本     | ≤500，非空                   | 内容           |
-| color      | 字符串   | 长度 7，非空，默认 `#FFE57F` | HEX 颜色       |
-| image_urls | JSON     | 可为空，最多 3 个 URL        | 图片 URL 数组  |
-| created_at | 日期时间 | 默认 `NOW()`                 | 创建时间       |
-| updated_at | 日期时间 | 默认 `NOW()`，更新自动刷新   | 更新时间       |
+| 字段名     | 类型     | 约束                         | 说明          |
+| ---------- | -------- | ---------------------------- | ------------- |
+| id         | 整数     | 主键，自增                   | 唯一标识      |
+| title      | 字符串   | ≤30，非空                    | 标题          |
+| content    | 文本     | ≤500，非空                   | 内容          |
+| color      | 字符串   | 长度 7，非空，默认 `#FFE57F` | HEX 颜色      |
+| image_urls | JSON     | 可为空，最多 3 个 URL        | 图片 URL 数组 |
+| created_at | 日期时间 | 默认 `NOW()`                 | 创建时间      |
+| updated_at | 日期时间 | 默认 `NOW()`，更新自动刷新   | 更新时间      |
 
 **图片存储**：
 
-- 图片存储在 Vercel Blob 中，数据库仅存储图片 URL。
+- 图片必须存储在 Vercel Blob 中，数据库仅存储图片 URL（由于 TiDB 性能限制，禁止将图片数据以 base64 格式存入数据库）。
 - `image_urls` 字段为 JSON 数组，格式：`["https://xxx.vercel-storage.com/image1.jpg", ...]`。
 - 每个笔记最多存储 3 个图片 URL。
 
@@ -285,7 +321,7 @@ Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/
 - 使用 `NoteRepository` 作为数据库访问边界，对外提供 create/get_all/update/delete 四类能力。
 - 内部使用 SQLAlchemy Session 事务管理，异常时回滚并返回统一错误格式。
 
-### 3.4 API 合同与校验逻辑
+### 3.5 API 合同与校验逻辑
 
 - `GET /api/notes`：按 `created_at` 降序返回，包含 `image_urls` 字段。
 - `POST /api/notes`：接收 `{title, content, color, images}`（images 为文件数组），进行字段校验后：
@@ -305,6 +341,10 @@ Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/
 **图片上传实现要求**：
 
 - 使用 Vercel Blob 存储服务，通过 `BLOB_READ_WRITE_TOKEN` 环境变量进行认证。
+- **强制要求**：由于 TiDB 性能限制，图片必须存储在 Vercel Blob 中，禁止将图片数据以 base64 格式存入数据库。
+- **环境变量配置要求**：`BLOB_READ_WRITE_TOKEN` 必须配置，不允许 fallback。如果本地 `.env` 文件中没有该变量：
+  - 必须使用 Vercel CLI 工具获取：运行 `vercel env pull .env.local` 或 `vercel env pull .env`
+  - 如果 Vercel 项目中未配置，必须在 Vercel Dashboard 中先配置该环境变量，然后使用 CLI 拉取
 - 图片上传实现方式（二选一）：
   1. **使用 Vercel CLI**：通过 `vercel blob put <file>` 命令上传，获取返回的 URL。
   2. **使用 Python SDK**：安装 `vercel-blob` Python 包（如果可用），或使用 Vercel Blob REST API。
@@ -315,7 +355,7 @@ Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/
 - 图片删除：使用 `vercel blob rm <url>` 命令或相应的 API 删除。
 - 所有 Vercel Blob 操作必须通过 Vercel CLI 或官方 API 完成，禁止使用第三方工具。
 
-### 3.5 测试落地方案（目录、隔离、断言）
+### 3.6 测试落地方案（目录、隔离、断言）
 
 **测试目录结构**：
 
@@ -333,8 +373,8 @@ Preflight 必须先读取 project.config.json，并使用其中的值进行 Git/
 - UI 层：元素存在/可见/可点击/关键样式可被选择器断言。
 - 数据层：关键操作后通过 API 校验数据状态与字段值。
 
-### 3.6 运行方式与 CI/CD
+### 3.7 运行方式与 CI/CD
 
 - 本地开发与测试统一入口：`vercel dev`。
-- CI（GitHub Actions）：先跑 pytest（单元/API），再跑本地 `vercel dev` 下 E2E；部署到 Vercel 预览环境后，针对预览 URL 再跑一次 E2E。
-
+- CI（GitHub Actions）：先跑 pytest（单元/API），再跑本地 `vercel dev` 下 E2E；测试通过后部署到 Vercel 生产环境。
+- **最终验证**：所有功能验证必须在 Vercel 生产环境进行，确保生产环境行为符合所有验收标准。
