@@ -180,7 +180,7 @@ specify init .
 
 在你的 AI 助手中，使用以下命令：
 
-```
+```text
 /speckit.constitution
 ```
 
@@ -188,7 +188,7 @@ specify init .
 
 **示例**：
 
-```
+```text
 /speckit.constitution
 
 ## Constitution
@@ -211,7 +211,7 @@ specify init .
 
 在你的 AI 助手中，使用以下命令：
 
-```
+```text
 /speckit.specify
 ```
 
@@ -221,7 +221,7 @@ specify init .
 
 在你的 AI 助手中，使用以下命令：
 
-```
+```text
 /speckit.plan
 ```
 
@@ -237,7 +237,7 @@ specify init .
 
 使用以下命令将实现计划分解为具体的开发任务：
 
-```
+```text
 /speckit.tasks
 ```
 
