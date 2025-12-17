@@ -277,7 +277,7 @@ specify init .
 
 然后将 `spec-template-rendered.md`（或已替换占位符的 `spec-template.md`）中 **Constitution 章节**的内容（从 `## Constitution` 开始，到 `---` 之前）**完整复制**粘贴到命令中。
 
-> **提示**：如果使用了 `scripts/render-spec.py` 脚本，建议使用生成的 `spec-template-rendered.md` 文件，确保所有占位符都已替换。
+> **提示**：如果使用了 `scripts/render-spec.sh` 或 `scripts/render-spec.py` 脚本，建议使用生成的 `spec-template-rendered.md` 文件，确保所有占位符都已替换。
 
 **示例**：
 
@@ -418,7 +418,7 @@ Spec-Kit 的设计理念是通过 AI 助手进行交互式开发。使用 `/spec
 
 **如果使用脚本**：
 
-运行 `python3 scripts/render-spec.py` 后，脚本会自动验证并显示替换统计。如果看到"✓ 所有占位符已成功替换"，说明替换成功。
+运行 `./scripts/render-spec.sh` 或 `python3 scripts/render-spec.py` 后，脚本会自动验证并显示替换统计。如果看到"✓ 所有占位符已成功替换"，说明替换成功。
 
 **如果手动替换**：
 
@@ -442,7 +442,7 @@ Spec-Kit 的设计理念是通过 AI 助手进行交互式开发。使用 `/spec
 
 是的。如果修改了你项目中的 `project.config.json`，需要：
 
-1. 重新运行 `python3 scripts/render-spec.py` 生成新的 `spec-template-rendered.md`（或手动替换 `spec-template.md` 中的占位符）
+1. 重新运行 `./scripts/render-spec.sh` 或 `python3 scripts/render-spec.py` 生成新的 `spec-template-rendered.md`（或手动替换 `spec-template.md` 中的占位符）
 2. 重新使用 AI 助手命令导入更新后的规范内容
 3. 确保 Preflight 校验能够读取到更新后的配置
 
