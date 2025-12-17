@@ -150,7 +150,7 @@ echo -e "${BLUE}========================================${NC}\n"
 
 echo -e "${YELLOW}下一步：${NC}"
 echo -e "1. 确保 GitHub 仓库 $GITHUB_OWNER/$REPO_NAME 已创建"
-echo -e "2. 运行 ./scripts/render-spec.sh 替换占位符"
+echo -e "2. 运行 python3 scripts/render-spec.py 替换占位符"
 echo -e "3. 创建 .env 文件（参考 env.example）"
 echo -e "4. 运行 specify init . 初始化 Spec-Kit"
 

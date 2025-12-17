@@ -14,14 +14,51 @@ render-spec.py
 
 import json
 import sys
+import subprocess
 from pathlib import Path
 
-try:
-    from jinja2 import Template, Environment, FileSystemLoader
-except ImportError:
-    print("错误：未安装 Jinja2")
-    print("请运行：pip install jinja2")
-    sys.exit(1)
+# 检查并安装依赖
+def check_and_install_dependencies():
+    try:
+        import jinja2
+        return True
+    except ImportError:
+        print("警告：未安装 Jinja2")
+        print("正在尝试安装依赖...")
+        
+        # 检查是否有 requirements.txt
+        script_dir = Path(__file__).parent
+        requirements_file = script_dir / "requirements.txt"
+        
+        if requirements_file.exists():
+            try:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(requirements_file)])
+            except subprocess.CalledProcessError:
+                print("错误：无法从 requirements.txt 安装依赖")
+                print("请手动运行：pip install -r scripts/requirements.txt")
+                sys.exit(1)
+        else:
+            try:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "jinja2"])
+            except subprocess.CalledProcessError:
+                print("错误：无法安装 Jinja2")
+                print("请手动运行：pip install jinja2")
+                sys.exit(1)
+        
+        print("✓ 依赖安装完成")
+        
+        # 再次尝试导入
+        try:
+            import jinja2
+            return True
+        except ImportError:
+            print("错误：安装后仍无法导入 Jinja2")
+            sys.exit(1)
+
+# 检查并安装依赖
+check_and_install_dependencies()
+
+from jinja2 import Template
 
 
 def main():
