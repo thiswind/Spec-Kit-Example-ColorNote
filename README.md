@@ -58,7 +58,9 @@
 ├── project.config.json      # 项目配置（需填写你的项目信息）
 ├── spec-template.md         # Spec-Kit 三件套模板（包含占位符）
 ├── scripts/
-│   └── render-spec.py      # 自动替换占位符的脚本（使用 Jinja2）
+│   ├── render-spec.py      # Python 脚本：使用 Jinja2 替换占位符
+│   ├── render-spec.sh      # Shell 脚本：便捷调用 Python 脚本
+│   └── requirements.txt     # Python 依赖（Jinja2）
 └── README.md               # 本文件
 ```
 
@@ -70,6 +72,9 @@
   - 在你的项目中，该文件会被 Preflight 校验读取（见 Plan 章节）
   - **注意**：模板仓库中的是示例，你需要在**自己的项目**中创建并填写该文件
 - **`spec-template.md`**：包含 Constitution（项目宪章）、Specify（需求规格）、Plan（实现计划）三个章节的完整模板，包含占位符需要替换
+- **`scripts/render-spec.py`**：Python 脚本，使用 Jinja2 模板引擎自动替换 `spec-template.md` 中的占位符，生成 `spec-template-rendered.md`
+- **`scripts/render-spec.sh`**：Shell 脚本，便捷调用 Python 脚本，自动检查并安装依赖
+- **`scripts/requirements.txt`**：Python 依赖文件，包含 Jinja2（用于模板渲染）
 
 ---
 
@@ -156,13 +161,24 @@ specify init --help
 
 **方法一：使用自动化脚本（推荐）**
 
-使用提供的 Python 脚本自动替换占位符：
+使用提供的脚本自动替换占位符：
+
+**方式 A：使用 Shell 脚本（最简单）**
 
 ```bash
-# 确保已安装 Jinja2（如果未安装）
+# 直接运行 shell 脚本（会自动检查并安装依赖）
+./scripts/render-spec.sh
+```
+
+**方式 B：使用 Python 脚本**
+
+```bash
+# 先安装依赖（如果未安装）
+pip install -r scripts/requirements.txt
+# 或
 pip install jinja2
 
-# 运行渲染脚本
+# 运行 Python 脚本
 python3 scripts/render-spec.py
 ```
 
@@ -170,6 +186,7 @@ python3 scripts/render-spec.py
 - 读取 `project.config.json` 中的配置值
 - 使用 Jinja2 模板引擎替换 `spec-template.md` 中的所有占位符
 - 生成 `spec-template-rendered.md`（原模板文件保持不变）
+- 自动验证替换是否成功，并显示替换统计
 
 **方法二：手动替换**
 
@@ -425,7 +442,7 @@ Spec-Kit 的设计理念是通过 AI 助手进行交互式开发。使用 `/spec
 
 是的。如果修改了你项目中的 `project.config.json`，需要：
 
-1. 重新替换 `spec-template.md` 中的占位符（使用新的配置值）
+1. 重新运行 `python3 scripts/render-spec.py` 生成新的 `spec-template-rendered.md`（或手动替换 `spec-template.md` 中的占位符）
 2. 重新使用 AI 助手命令导入更新后的规范内容
 3. 确保 Preflight 校验能够读取到更新后的配置
 
