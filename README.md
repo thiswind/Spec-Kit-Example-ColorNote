@@ -1,6 +1,24 @@
-# ColorNote - Spec-Kit 项目开发模板
+# Spec-Kit 示例模板：ColorNote 项目
 
-本仓库提供了一个完整的 Spec-Kit 三件套模板（Constitution / Specify / Plan），帮助你通过规范驱动的方式完成 ColorNote 项目的开发。本 README 将指导你如何手动使用这些模板文件，配合 Spec-Kit 工具完成整个项目开发流程。
+> **这是一个 Spec-Kit 示例模板仓库**，用于演示如何通过 Spec-Kit 进行规范驱动的项目开发。
+
+本仓库提供了一个完整的 Spec-Kit 三件套模板（Constitution / Specify / Plan），帮助你学习并实践规范驱动开发流程。本 README 将指导你如何手动使用这些模板文件，配合 Spec-Kit 工具完成 ColorNote 项目的开发。
+
+## 🎯 项目目的
+
+本仓库是一个**示例模板项目**，旨在：
+
+- 展示如何使用 Spec-Kit 进行规范驱动开发
+- 提供完整的模板文件（Constitution / Specify / Plan）
+- 演示如何从需求到实现的完整工作流
+- 作为学习 Spec-Kit 的实践案例
+
+## 📋 如何使用本模板
+
+1. **Fork 或 Clone 本仓库**到你的 GitHub 账号
+2. **按照本 README 的步骤**配置和使用模板文件
+3. **创建你自己的 ColorNote 项目**，使用这些模板作为起点
+4. **学习 Spec-Kit 工作流**，理解规范驱动开发的最佳实践
 
 ## 📁 模板文件说明
 
@@ -40,10 +58,11 @@ specify init --help
 
 #### 2. 准备 GitHub 仓库
 
-- 在 GitHub 上创建目标仓库
+- **重要**：本仓库是模板示例，你需要创建**你自己的** ColorNote 项目仓库
+- 在 GitHub 上创建目标仓库（可以命名为 `ColorNote` 或其他你喜欢的名称）
 - 记录以下信息：
-  - 仓库 owner（用户名或组织名）
-  - 仓库名称
+  - 仓库 owner（你的 GitHub 用户名或组织名）
+  - 仓库名称（例如 `ColorNote`）
   - 默认分支名（通常是 `main`）
 
 #### 3. 准备 Vercel 项目
@@ -306,6 +325,18 @@ specify init
 ### Q5: `.env` 文件应该提交到 Git 吗？
 
 **不应该**。`.env` 包含敏感信息（数据库密码等），应该添加到 `.gitignore` 中。只提交 `env.example` 作为模板。
+
+### Q6: 这个仓库是实际项目还是模板？
+
+这是一个**示例模板仓库**（`Spec-Kit-Example-ColorNote`），用于学习和演示 Spec-Kit 的使用方法。你需要：
+
+1. Fork 或 Clone 本仓库
+2. 创建你自己的 ColorNote 项目仓库
+3. 使用本模板作为起点，配置你自己的项目信息
+4. 按照 README 步骤生成 Spec-Kit 三件套文件
+5. 开始实际的项目开发
+
+本仓库本身不包含实际运行的项目代码，只包含模板文件和配置示例。
 
 ---
 
