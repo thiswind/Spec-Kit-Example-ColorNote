@@ -483,15 +483,58 @@ Spec-Kit 的设计理念是通过 AI 助手进行交互式开发。使用 `/spec
 这是一个**示例模板仓库**（`Spec-Kit-Example-ColorNote`），用于学习和演示 Spec-Kit 的使用方法。你需要：
 
 1. Fork 或 Clone 本仓库，获取模板文件
-2. 创建你自己的 ColorNote 项目仓库
-3. 在你的项目中创建 `project.config.json` 和 `.env` 文件（参考模板中的示例）
-4. 在你的项目中初始化 Spec-Kit：`specify init .`
-5. 使用 AI 助手命令，将模板内容导入到 Spec-Kit
-6. 开始实际的项目开发
+2. **删除 `.git/` 目录**（重要：这是模板仓库的 Git 历史）
+3. 创建你自己的 ColorNote 项目仓库
+4. 重新初始化 Git，连接到你的项目仓库
+5. 在你的项目中创建 `project.config.json` 和 `.env` 文件（参考模板中的示例）
+6. 在你的项目中初始化 Spec-Kit：`specify init .`
+7. 使用 AI 助手命令，将模板内容导入到 Spec-Kit
+8. 开始实际的项目开发
 
 本仓库本身不包含实际运行的项目代码，只包含模板文件和配置示例。
 
 ### Q8: 支持哪些 AI 助手？
+
+Spec-Kit 支持多种 AI 助手，包括但不限于：
+
+- Claude（Anthropic）
+- GitHub Copilot
+- Gemini（Google）
+- Codebuddy CLI
+
+在运行 `specify init .` 时，你可以选择使用的 AI 助手。
+
+### Q9: 为什么需要删除 `.git/` 目录？
+
+**必须删除的原因**：
+
+1. **Preflight 校验要求**：Plan 章节中的 Preflight 校验会检查 Git remote origin 是否匹配 `project.config.json` 中的仓库信息。如果保留模板仓库的 `.git/`，origin 会指向模板仓库（`thiswind/Spec-Kit-Example-ColorNote`），而不是你的项目仓库，导致 Preflight 校验失败。
+
+2. **避免混淆**：模板仓库的 Git 历史与你自己的项目无关，保留会导致：
+   - Git 历史混乱（包含模板仓库的提交记录）
+   - 无法正确推送到你自己的仓库
+   - Preflight 校验无法通过
+
+3. **正确的流程**：
+
+   ```bash
+   # 1. 克隆模板
+   git clone https://github.com/thiswind/Spec-Kit-Example-ColorNote.git
+   cd Spec-Kit-Example-ColorNote
+   
+   # 2. 删除模板的 Git 历史
+   rm -rf .git
+   
+   # 3. 重新初始化 Git，连接到你的仓库
+   git init
+   git remote add origin https://github.com/your-username/ColorNote.git
+   git branch -M main
+   
+   # 4. 填写 project.config.json（确保 github_owner 和 repo_name 匹配你的仓库）
+   # 5. 继续后续步骤...
+   ```
+
+4. **验证**：重新初始化后，运行 `git remote -v` 应该显示你的仓库地址，而不是模板仓库地址。
 
 Spec-Kit 支持多种 AI 助手，包括但不限于：
 
