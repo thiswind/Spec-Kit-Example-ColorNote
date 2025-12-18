@@ -47,11 +47,13 @@
    - `repo_name`：你的项目仓库名称（必须与步骤 2 中创建的仓库名一致）
    - `default_branch`：默认分支名（通常是 `main`）
    - `vercel_project_name`：Vercel 项目名称（可选）
-4. **运行初始化脚本**（自动删除 `.git/` 并重新初始化 Git）：
-   ```bash
-   ./scripts/init-project.sh
-   ```
-   脚本会从 `project.config.json` 读取配置，自动完成初始化
+4. **手动初始化 Git 仓库**（删除模板仓库的 `.git/` 并重新初始化）：
+   - **Windows (PowerShell)**：删除模板仓库的 Git 历史：`Remove-Item -Recurse -Force .git`
+   - **macOS / Linux**：删除模板仓库的 Git 历史：`rm -rf .git`
+   - 初始化 Git 仓库：`git init`
+   - 设置默认分支：`git branch -M main`（或你配置的分支名）
+   - 添加远程仓库：`git remote add origin https://github.com/your-username/ColorNote.git`（替换为你的仓库地址）
+   - 验证配置：`git remote -v` 应该显示你的仓库地址
 5. **在你的项目中初始化 Spec-Kit**：`specify init .`
 6. **使用 AI 助手命令**，将 `spec-template.md` 中的内容复制到相应的 Spec-Kit 命令中
 7. **开始使用 Spec-Kit 进行开发**
@@ -68,7 +70,6 @@
 ├── project.config.json      # 项目配置（需填写你的项目信息）
 ├── spec-template.md         # Spec-Kit 三件套模板（包含占位符）
 ├── scripts/
-│   ├── init-project.sh     # 初始化脚本：删除 .git/ 并重新初始化 Git
 │   ├── render-spec.py      # Python 脚本：使用 Jinja2 替换占位符（自动检查并安装依赖）
 │   └── requirements.txt     # Python 依赖（Jinja2）
 └── README.md               # 本文件
@@ -82,7 +83,6 @@
   - 在你的项目中，该文件会被 Preflight 校验读取（见 Plan 章节）
   - **注意**：模板仓库中的是示例，你需要在**自己的项目**中创建并填写该文件
 - **`spec-template.md`**：包含 Constitution（项目宪章）、Specify（需求规格）、Plan（实现计划）三个章节的完整模板，包含占位符需要替换
-- **`scripts/init-project.sh`**：项目初始化脚本，从 `project.config.json` 读取配置，自动删除模板仓库的 `.git/` 目录，重新初始化 Git 并连接到你的项目仓库
 - **`scripts/render-spec.py`**：Python 脚本，使用 Jinja2 模板引擎自动替换 `spec-template.md` 中的占位符，生成 `spec-template-rendered.md`。脚本会自动检查并安装依赖（Jinja2）
 - **`scripts/requirements.txt`**：Python 依赖文件，包含 Jinja2（用于模板渲染）
 
@@ -113,46 +113,90 @@ specify init --help
   - 仓库名称（例如 `ColorNote`）
   - 默认分支名（通常是 `main`）
 
-**使用初始化脚本（推荐）**：
+**手动初始化 Git 仓库**：
 
-运行初始化脚本，脚本会从 `project.config.json` 读取配置，自动完成删除 `.git/`、重新初始化 Git 等操作：
+按照以下步骤手动初始化 Git 仓库。以下以 **Windows (PowerShell)** 为主要说明，macOS/Linux 用户请参考对应的命令。
 
-```bash
-./scripts/init-project.sh
-```
+1. **检查并删除模板仓库的 Git 历史**：
 
-脚本会自动：
-- 从 `project.config.json` 读取配置信息
-- 检测并删除模板仓库的 `.git/` 目录
-- 重新初始化 Git 仓库
-- 设置默认分支（从 `project.config.json` 读取）
-- 添加你的 GitHub 仓库作为 remote origin（基于 `project.config.json` 中的配置）
+   **Windows (PowerShell)**：
 
-**手动操作（如果不使用脚本）**：
+   ```powershell
+   # 检查当前 Git 配置
+   git remote -v
+   
+   # 如果显示的是模板仓库地址（包含 Spec-Kit-Example-ColorNote），需要删除
+   Remove-Item -Recurse -Force .git
+   ```
 
-如果你不想使用脚本，可以手动执行：
+   > **macOS / Linux (Bash / Zsh) 用户**：使用 `rm -rf .git` 代替 `Remove-Item -Recurse -Force .git`  
+   > **注意**：如果 `git remote -v` 显示的是你自己的仓库地址，可以跳过删除步骤。
 
-```bash
-# 删除模板仓库的 Git 历史
-rm -rf .git
+2. **初始化 Git 仓库**：
 
-# 初始化 Git 仓库
-git init
+   **Windows (PowerShell)**：
 
-# 添加你的远程仓库
-git remote add origin https://github.com/your-username/ColorNote.git
+   ```powershell
+   git init
+   ```
 
-# 设置默认分支
-git branch -M main
+   > 注意：Git 命令在所有操作系统上都是相同的。macOS/Linux 用户使用相同的命令。
 
-# 手动更新 project.config.json
-```
+3. **设置默认分支**：
 
-> **为什么需要删除 `.git/`？**
->
-> - Preflight 校验要求 Git remote origin 必须匹配 `project.config.json` 中的仓库信息
-> - 模板仓库的 `.git/` 指向模板仓库，而不是你的项目仓库
-> - 保留模板的 Git 历史会导致 Preflight 校验失败
+   **Windows (PowerShell)**：
+
+   ```powershell
+   # 使用你在 project.config.json 中配置的分支名（通常是 main）
+   git branch -M main
+   ```
+
+   如果 `project.config.json` 中配置的是其他分支名（如 `master`），使用对应的分支名。
+
+   > 注意：macOS/Linux 用户使用相同的命令。
+
+4. **添加远程仓库**：
+
+   **Windows (PowerShell)**：
+
+   ```powershell
+   # 替换为你的实际仓库地址
+   git remote add origin https://github.com/your-username/ColorNote.git
+   ```
+
+   确保 `your-username` 和 `ColorNote` 与 `project.config.json` 中的 `github_owner` 和 `repo_name` 一致。
+
+   > 注意：macOS/Linux 用户使用相同的命令。
+
+5. **验证 Git 配置**：
+
+   **Windows (PowerShell)**：
+
+   ```powershell
+   # 验证远程仓库配置
+   git remote -v
+   # 应该显示：origin  https://github.com/your-username/ColorNote.git (fetch)
+   #          origin  https://github.com/your-username/ColorNote.git (push)
+   
+   # 验证当前分支
+   git branch --show-current
+   # 应该显示你在 project.config.json 中配置的 default_branch
+   ```
+
+   > 注意：macOS/Linux 用户使用相同的命令。
+
+6. **确保 `project.config.json` 配置正确**：
+
+   在继续之前，确保 `project.config.json` 中的配置与你的 Git 仓库信息一致：
+   - `github_owner` 必须与你的 GitHub 用户名或组织名一致
+   - `repo_name` 必须与你的仓库名称一致
+   - `default_branch` 必须与你的默认分支名一致
+
+   > **为什么需要删除 `.git/`？**
+   >
+   > - Preflight 校验要求 Git remote origin 必须匹配 `project.config.json` 中的仓库信息
+   > - 模板仓库的 `.git/` 指向模板仓库，而不是你的项目仓库
+   > - 保留模板的 Git 历史会导致 Preflight 校验失败
 
 #### 3. 准备 Vercel 项目
 
@@ -210,7 +254,7 @@ git branch -M main
 
 #### 2.2 处理 `spec-template.md` 中的占位符
 
-**方法一：使用自动化脚本（推荐）**
+##### 方法一：使用自动化脚本（推荐）
 
 使用提供的脚本自动替换占位符：
 
@@ -224,12 +268,13 @@ python3 scripts/render-spec.py
 脚本会自动检查并安装 Jinja2 依赖（如果未安装）。
 
 脚本会：
+
 - 读取 `project.config.json` 中的配置值
 - 使用 Jinja2 模板引擎替换 `spec-template.md` 中的所有占位符
 - 生成 `spec-template-rendered.md`（原模板文件保持不变）
 - 自动验证替换是否成功，并显示替换统计
 
-**方法二：手动替换**
+##### 方法二：手动替换
 
 如果你想手动替换，可以在 `spec-template.md` 中，将所有占位符替换为 `project.config.json` 中的实际值：
 
@@ -531,13 +576,15 @@ Spec-Kit 支持多种 AI 助手，包括但不限于：
 
 3. **正确的流程**：
 
-   ```bash
+   **Windows (PowerShell)**：
+
+   ```powershell
    # 1. 克隆模板
    git clone https://github.com/thiswind/Spec-Kit-Example-ColorNote.git
    cd Spec-Kit-Example-ColorNote
    
    # 2. 删除模板的 Git 历史
-   rm -rf .git
+   Remove-Item -Recurse -Force .git
    
    # 3. 重新初始化 Git，连接到你的仓库
    git init
@@ -548,16 +595,9 @@ Spec-Kit 支持多种 AI 助手，包括但不限于：
    # 5. 继续后续步骤...
    ```
 
+   > **macOS / Linux (Bash / Zsh) 用户**：将第 2 步的 `Remove-Item -Recurse -Force .git` 替换为 `rm -rf .git`，其他命令相同。
+
 4. **验证**：重新初始化后，运行 `git remote -v` 应该显示你的仓库地址，而不是模板仓库地址。
-
-Spec-Kit 支持多种 AI 助手，包括但不限于：
-
-- Claude（Anthropic）
-- GitHub Copilot
-- Gemini（Google）
-- Codebuddy CLI
-
-在运行 `specify init .` 时，你可以选择使用的 AI 助手。
 
 ---
 
